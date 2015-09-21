@@ -2,7 +2,7 @@ var express = require('express');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-
+var players = [];
 app.use('/bin', express.static('bin'));
 app.use('/img', express.static('img'));
 
@@ -20,6 +20,7 @@ io.on('connection', function(socket){
 
   //receive and broadcast player pos
   socket.on('player pos', function(pos_){
+    pos_ += ',' + socket.id;
   	io.emit('player pos', pos_);
   	console.log('player pos: ' + pos_)
   });
@@ -29,7 +30,13 @@ io.on('connection', function(socket){
     console.log('client disconnected');
   });
 
-  console.log('new connection');
+  console.log('new connection ' + socket.id);
+  
+  //create a javascript object for the player and add it to the array
+  var player = socket.id;
+  players.push(player);
+  console.log(players.toString());
+
 });
 
 //start the webserver

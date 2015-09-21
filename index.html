@@ -49,8 +49,16 @@
         var pos = pos_.split(',');
 
         //move player according to x and y
-        window.gameLoop.playerSprite.destination._x = parseInt(pos[0]);
-        window.gameLoop.playerSprite.destination._y = parseInt(pos[1]);
+        if ( !(pos[2] in window.gameLoop.players ) ) //if key does not exist. create it
+        {
+          var player = new Player(pos[2]);
+          window.gameLoop.players[pos[2]] = (player);
+          player.addToStage(window.gameLoop.stage);
+        }
+                
+        window.gameLoop.players[pos[2]].sprite.destination._x = parseInt(pos[0]);
+        window.gameLoop.players[pos[2]].sprite.destination._y = parseInt(pos[1]);
+        
       });      
 
       //send chat message
@@ -68,6 +76,20 @@
 
 
     <script>
+
+    var scoreFontStyle = {
+      align: 'center',
+      font : '20px Arial bold italic',
+      fill : '#F7EDCA',
+      stroke : '#4a1850',
+      strokeThickness : 1,
+      dropShadow : true,
+      dropShadowColor : '#000000',
+      dropShadowAngle : Math.PI / 6,
+      dropShadowDistance : 2,
+      wordWrap : true,
+      wordWrapWidth : 440
+};
 
 var vector2 = {
   _x: 1,
@@ -163,6 +185,29 @@ var vector2 = {
   }
 };
 
+function Player(id_)
+{
+  var self = this;
+  self.id = id_;
+  self.sprite = PIXI.Sprite.fromImage("./img/player.png");
+  self.sprite.position.set(400,300);
+  self.sprite.destination = vector2.create(300, 200);
+
+  //socket id @ (only for testing)
+  //socket.io.engine.id
+  self.socketText = new PIXI.Text(self.id, scoreFontStyle);
+
+  self.addToStage = function(stage_)
+  {
+    stage_.addChild(self.sprite);
+    stage_.addChild(self.socketText);
+  }
+
+  self.update = function()
+  {
+    self.socketText.position.set(self.sprite.position.x - 100, self.sprite.position.y - 20);
+  }
+}
 
     function GameLoop()
     {
@@ -170,20 +215,22 @@ var vector2 = {
       var self = this;
 
       //update loop
-      self.animate = function(){
+      self.animate = function()
+      {
         //move player towards destination
-        if ( self.playerSprite != undefined )
+        for ( p in self.players )
         {
-          var position = vector2.create(self.playerSprite.position.x, self.playerSprite.position.y);
+          var position = vector2.create(self.players[p].sprite.position.x, self.players[p].sprite.position.y);
           //console.log('position1' + position.toString() );
-          var direction = self.playerSprite.destination.subtract(position);
+          var direction = self.players[p].sprite.destination.subtract(position);
           direction.normalise();
           position.addTo(direction);
           //console.log('position2' + position.toString() );
-          self.playerSprite.position.x = position._x;
-          self.playerSprite.position.y = position._y;
-          //console.log('playerpos' + self.playerSprite.position.x + ' ' + self.playerSprite.position.y );
-        }
+
+          self.players[p].sprite.position.x = position._x;
+          self.players[p].sprite.position.y = position._y;
+          self.players[p].update();
+        }        
 
         //render then ask for another animation frame
         self.renderer.render(self.stage);    
@@ -217,15 +264,11 @@ var vector2 = {
       self.stage.addChild(self.bgSprite);
 
       //create a player sprite and pop him in the middle
-      self.playerSprite = PIXI.Sprite.fromImage("./img/player.png");
-      self.playerSprite.position.set(400,300);
-      self.playerSprite.destination = vector2.create(300, 200);
-      self.stage.addChild(self.playerSprite);
-
+      self.players = [];
+      self.players[socket.io.engine.id] = new Player(socket.io.engine.id);
+      self.players[socket.io.engine.id].addToStage(self.stage);
 
       requestAnimationFrame( this.animate );
-
-
     }
 
     function onAssetsLoaded(){
