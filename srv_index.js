@@ -5,12 +5,13 @@ var io = require('socket.io')(http);
 var players = [];
 
 //need these two lines to serve files from /bin and /img directories
+app.use('/client', express.static('client'));
 app.use('/bin', express.static('bin'));
 app.use('/img', express.static('img'));
 
 //serve the index.html file to the client
 app.get('/', function(req, res){
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(__dirname + '/client/clnt_index.html');
 });
 
 //setup events on connection
