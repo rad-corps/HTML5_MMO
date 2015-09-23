@@ -3,13 +3,17 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var players = [];
+
+//need these two lines to serve files from /bin and /img directories
 app.use('/bin', express.static('bin'));
 app.use('/img', express.static('img'));
 
+//serve the index.html file to the client
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
 
+//setup events on connection
 io.on('connection', function(socket){
   
   //receive and broadcast chat string
@@ -30,6 +34,7 @@ io.on('connection', function(socket){
     console.log('client disconnected');
   });
 
+  //log new connections in server console
   console.log('new connection ' + socket.id);
   
   //create a javascript object for the player and add it to the array
